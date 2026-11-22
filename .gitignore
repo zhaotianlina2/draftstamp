@@ -1,0 +1,12 @@
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+
+# Local QA artifacts (not part of the public release)
+.work/

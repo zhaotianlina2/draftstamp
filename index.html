@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f3ecdf">
+  <meta name="description" content="DraftStamp 是一款离线写作起步工具：把模糊的卡点变成一张可执行的十分钟任务卡。">
+  <title>DraftStamp — 写作十分钟邮局</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3ecdf;
+      --paper-light: #fbf8f1;
+      --paper-deep: #e8dece;
+      --ink: #1f2c3d;
+      --ink-soft: #59616a;
+      --muted: #85857f;
+      --line: #ded4c5;
+      --red: #b64e3d;
+      --red-dark: #943c30;
+      --sage: #6e7869;
+      --gold: #bd9b62;
+      --shadow: 0 20px 60px rgba(54, 42, 29, .08), 0 2px 8px rgba(54, 42, 29, .04);
+      --serif: Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif;
+      --sans: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(104, 80, 51, .08) .65px, transparent .65px);
+      background-size: 7px 7px;
+      color: var(--ink);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, textarea:focus-visible { outline: 3px solid rgba(182, 78, 61, .36); outline-offset: 3px; }
+    .page { max-width: 1200px; margin: 0 auto; padding: 25px 34px 44px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .brand { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+    .brand-mark { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(31,44,61,.25); border-radius: 13px; background: var(--paper-light); box-shadow: 0 3px 8px rgba(54,42,29,.06); }
+    .brand-mark svg { width: 24px; height: 24px; }
+    .brand-name { font: 700 18px/1 var(--serif); letter-spacing: .015em; }
+    .brand-sub { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; letter-spacing: .17em; text-transform: uppercase; }
+    .offline-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid rgba(110,120,105,.24); border-radius: 999px; color: #53624f; background: rgba(251,248,241,.64); font-size: 11px; letter-spacing: .08em; white-space: nowrap; }
+    .offline-dot { width: 7px; height: 7px; background: #71886d; border-radius: 50%; box-shadow: 0 0 0 3px rgba(113,136,109,.12); }
+    .hero { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(280px,.9fr); align-items: center; gap: 38px; padding: 60px 3px 48px; }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--red); font-size: 10px; font-weight: 700; letter-spacing: .19em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 28px; height: 1px; background: var(--red); }
+    h1 { margin: 16px 0 15px; font: 500 clamp(39px,5.4vw,64px)/1.13 var(--serif); letter-spacing: -.055em; }
+    h1 em { color: var(--red); font-style: normal; }
+    .hero-copy { max-width: 505px; margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.9; }
+    .hero-note { display: inline-flex; align-items: center; gap: 8px; margin-top: 17px; color: var(--muted); font-size: 11px; }
+    .hero-note svg { width: 14px; height: 14px; color: var(--sage); }
+    .postcard-scene { position: relative; min-height: 206px; display: flex; align-items: center; justify-content: center; }
+    .postcard { position: relative; width: min(100%, 355px); min-height: 184px; padding: 23px 25px; border: 1px solid #e0d4c2; border-radius: 4px; background: #faf5e9; box-shadow: 8px 12px 0 rgba(125,98,68,.08), var(--shadow); transform: rotate(2deg); }
+    .postcard::before { content: ""; position: absolute; inset: 8px; border: 1px dashed rgba(182,78,61,.3); pointer-events: none; }
+    .postcard-top { display: flex; justify-content: space-between; color: #8e816f; font-size: 9px; letter-spacing: .13em; text-transform: uppercase; }
+    .postcard-lines { width: 64%; margin-top: 27px; }
+    .postcard-lines i { display: block; height: 1px; margin-top: 13px; background: #d9cbb7; }
+    .postcard-lines i:nth-child(2) { width: 82%; }
+    .postcard-lines i:nth-child(3) { width: 91%; }
+    .mini-stamp { position: absolute; top: 38px; right: 35px; width: 70px; height: 83px; display: grid; place-items: center; border: 1px solid rgba(182,78,61,.65); color: var(--red); background: rgba(182,78,61,.035); }
+    .mini-stamp::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(182,78,61,.3); }
+    .mini-stamp svg { width: 35px; height: 35px; }
+    .postmark { position: absolute; right: 3px; bottom: 13px; width: 111px; height: 64px; opacity: .7; }
+    .postmark::before, .postmark::after { content: ""; position: absolute; right: 0; width: 78px; height: 1px; background: var(--red); transform: rotate(-11deg); }
+    .postmark::before { top: 17px; }
+    .postmark::after { top: 27px; width: 100px; }
+    .postmark span { position: absolute; right: 6px; top: 36px; width: 89px; height: 1px; background: var(--red); transform: rotate(-11deg); }
+    .tiny-star { position: absolute; color: var(--gold); font: 20px var(--serif); }
+    .tiny-star.one { left: 5%; top: 20%; }
+    .tiny-star.two { right: 8%; top: 12%; font-size: 13px; }
+    .main-grid { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(250px,.75fr); align-items: start; gap: 22px; }
+    .main-column { min-width: 0; display: grid; gap: 18px; }
+    .panel { border: 1px solid rgba(98,78,55,.14); border-radius: 8px; background: rgba(251,248,241,.92); box-shadow: var(--shadow); }
+    .compose-panel { padding: 27px 30px 29px; }
+    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+    .step-label { display: flex; align-items: center; gap: 10px; color: var(--red); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .step-number { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid rgba(182,78,61,.3); border-radius: 50%; font: 12px var(--serif); letter-spacing: 0; }
+    .micro-label { color: #9a9285; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+    h2 { margin: 12px 0 7px; font: 600 25px/1.35 var(--serif); letter-spacing: -.025em; }
+    .section-copy { margin: 0; color: var(--ink-soft); font-size: 12px; line-height: 1.75; }
+    .field-label { display: block; margin: 21px 0 8px; color: var(--ink); font-size: 12px; font-weight: 650; }
+    .blocker-input, .draft-input, .card-edit { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: #fffdf8; transition: border-color .18s, box-shadow .18s; }
+    .blocker-input { min-height: 95px; padding: 13px 15px; font-size: 13px; line-height: 1.65; }
+    .blocker-input::placeholder, .draft-input::placeholder, .card-edit::placeholder { color: #aaa398; }
+    .blocker-input:focus, .draft-input:focus, .card-edit:focus { border-color: rgba(182,78,61,.55); box-shadow: 0 0 0 3px rgba(182,78,61,.08); outline: none; }
+    .input-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .input-meta strong { color: var(--sage); font-weight: 500; }
+    .action-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 20px; }
+    .privacy-note { display: flex; align-items: flex-start; gap: 7px; max-width: 255px; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .privacy-note svg { flex: 0 0 14px; width: 14px; height: 14px; margin-top: 1px; color: var(--sage); }
+    .primary-button, .secondary-button, .quiet-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; border-radius: 4px; font-size: 12px; font-weight: 650; transition: transform .18s, background .18s, box-shadow .18s; }
+    .primary-button { padding: 0 17px; border: 1px solid var(--red); color: #fffaf2; background: var(--red); box-shadow: 0 5px 12px rgba(182,78,61,.15); }
+    .primary-button:hover { transform: translateY(-1px); background: var(--red-dark); box-shadow: 0 7px 14px rgba(182,78,61,.2); }
+    .primary-button:disabled { cursor: not-allowed; opacity: .45; transform: none; box-shadow: none; }
+    .primary-button svg, .secondary-button svg { width: 15px; height: 15px; }
+    .secondary-button { padding: 0 14px; border: 1px solid var(--line); color: var(--ink); background: #fffdf8; }
+    .secondary-button:hover { border-color: #bcb09f; background: #f7f1e6; }
+    .quiet-button { min-height: 34px; padding: 0 9px; border: 0; color: var(--ink-soft); background: transparent; font-size: 11px; }
+    .quiet-button:hover { color: var(--red); }
+    .message { min-height: 17px; margin: 10px 0 0; color: var(--red); font-size: 11px; }
+    .cards-panel, .timer-panel, .result-panel { padding: 25px 27px 27px; scroll-margin-top: 18px; }
+    .cards-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
+    .category-note { max-width: 240px; color: var(--sage); font-size: 10px; line-height: 1.55; text-align: right; }
+    .cards-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 11px; }
+    .task-card { min-width: 0; padding: 13px 12px 12px; border: 1px solid #e2d8c9; border-radius: 5px; background: #fffdf8; transition: border-color .2s, box-shadow .2s, transform .2s; }
+    .task-card:hover { transform: translateY(-2px); }
+    .task-card.selected { border-color: var(--red); box-shadow: 0 0 0 2px rgba(182,78,61,.1), 0 8px 20px rgba(68,47,31,.06); }
+    .card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+    .card-index { color: #a49a8b; font: 11px var(--serif); letter-spacing: .08em; }
+    .card-chip { padding: 4px 6px; border-radius: 2px; color: #66705f; background: #edf0e7; font-size: 9px; }
+    .card-edit { min-height: 121px; padding: 9px 8px; border-color: transparent; background: transparent; font-size: 11px; line-height: 1.75; }
+    .card-edit:hover { border-color: #ece3d7; }
+    .pick-card { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; padding: 8px 9px; border: 1px solid #e4dbcf; border-radius: 3px; color: var(--ink-soft); background: #faf6ee; font-size: 10px; }
+    .task-card.selected .pick-card { border-color: rgba(182,78,61,.25); color: var(--red-dark); background: #fbefea; }
+    .pick-card svg { width: 13px; height: 13px; }
+    .cards-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 18px; padding-top: 15px; border-top: 1px solid #eee6d9; }
+    .cards-footer p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .timer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+    .timer-layout { display: grid; grid-template-columns: 220px minmax(0,1fr); align-items: center; gap: 26px; margin-top: 19px; }
+    .timer-dial { --progress: 0deg; position: relative; width: 210px; height: 210px; display: grid; place-items: center; margin: auto; border-radius: 50%; background: conic-gradient(var(--red) var(--progress), #e7dece var(--progress)); }
+    .timer-dial::before { content: ""; position: absolute; inset: 9px; border: 1px dashed rgba(31,44,61,.2); border-radius: 50%; background: var(--paper-light); }
+    .timer-inner { position: relative; z-index: 1; text-align: center; }
+    .timer-caption { display: block; color: var(--muted); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; }
+    .timer-value { display: block; margin: 8px 0 6px; font: 500 47px/.95 var(--serif); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    .timer-state { color: var(--sage); font-size: 10px; }
+    .focus-side { min-width: 0; }
+    .focus-title { margin: 0 0 6px; font: 600 17px/1.4 var(--serif); }
+    .focus-subtitle { margin: 0; color: var(--ink-soft); font-size: 11px; line-height: 1.7; }
+    .draft-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 17px 0 7px; color: var(--ink-soft); font-size: 10px; }
+    .draft-label-row span:last-child { color: var(--muted); }
+    .draft-input { min-height: 113px; padding: 12px; font-size: 12px; line-height: 1.75; }
+    .timer-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 13px; }
+    .timer-controls .primary-button, .timer-controls .secondary-button { min-height: 37px; }
+    .timer-reminder { margin: 12px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .result-layout { display: grid; grid-template-columns: minmax(0,1fr) 180px; align-items: center; gap: 20px; margin-top: 17px; }
+    .stamp-frame { position: relative; padding: 17px; border: 1px dashed #d2c5b2; border-radius: 5px; background: #f5eee1; }
+    .stamp-frame::before, .stamp-frame::after { content: ""; position: absolute; top: 50%; width: 13px; height: 13px; border: 1px solid #d2c5b2; border-radius: 50%; background: var(--paper-light); transform: translateY(-50%); }
+    .stamp-frame::before { left: -7px; }
+    .stamp-frame::after { right: -7px; }
+    .stamp-img { display: block; width: 100%; height: auto; border-radius: 2px; }
+    .result-copy h3 { margin: 0 0 7px; font: 600 20px var(--serif); }
+    .result-copy p { margin: 0; color: var(--ink-soft); font-size: 11px; line-height: 1.75; }
+    .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .sidebar { display: grid; gap: 18px; }
+    .sidebar-panel { padding: 21px 21px 19px; }
+    .passport-panel { padding: 20px; }
+    .passport-page-count { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 7px; border: 1px solid rgba(182,78,61,.3); border-radius: 50%; color: var(--red); font: 12px var(--serif); }
+    .passport-copy { margin: 8px 0 13px; color: var(--ink-soft); font-size: 10px; line-height: 1.65; }
+    .passport-slots { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+    .passport-slot { min-width: 0; min-height: 73px; display: grid; align-content: center; justify-items: center; gap: 4px; border: 1px dashed #d7cbbb; border-radius: 4px; color: #a19788; background: #f7f2e9; }
+    .passport-slot.is-stamped { border-style: solid; border-color: rgba(182,78,61,.42); color: var(--red-dark); background: #fbefea; }
+    .passport-slot-number { color: #9a9285; font-size: 8px; letter-spacing: .08em; }
+    .passport-slot-mark { width: 17px; height: 17px; border: 1px solid #cfc4b4; border-radius: 50%; }
+    .passport-slot.is-stamped .passport-slot-mark { border: 2px double var(--red); box-shadow: inset 0 0 0 3px #fbefea, inset 0 0 0 5px rgba(182,78,61,.45); }
+    .passport-slot-category { font: 600 11px var(--serif); }
+    .passport-slot-empty { font-size: 9px; }
+    .passport-meter { margin-top: 13px; }
+    .passport-meter-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; color: var(--muted); font-size: 9px; }
+    .passport-meter-label strong { color: var(--ink); font: 12px var(--serif); }
+    .passport-progress-track { height: 5px; overflow: hidden; border-radius: 99px; background: #e7dfd2; }
+    .passport-progress-fill { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--red); transition: width .22s ease-out; }
+    .passport-message { min-height: 2.8em; margin: 8px 0 11px; color: var(--sage); font-size: 10px; line-height: 1.55; }
+    .passport-latest { min-height: 2.8em; margin: 0; padding-top: 10px; border-top: 1px solid #eee6d9; color: var(--muted); font-size: 9px; line-height: 1.6; }
+    .passport-download { width: 100%; min-height: 36px; margin-top: 10px; font-size: 10px; }
+    .passport-download:disabled { cursor: not-allowed; color: #9c9588; background: #f5f0e7; }
+    .passport-unlock { display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 12px; margin-top: 19px; padding: 13px 15px; border: 1px solid #d9c8a8; border-radius: 5px; background: #f7f0e4; }
+    .passport-unlock-seal { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(182,78,61,.45); border-radius: 50%; color: var(--red); background: #fbf8f1; }
+    .passport-unlock-seal svg { width: 20px; height: 20px; }
+    .passport-unlock-copy strong { display: block; color: var(--ink); font: 600 13px var(--serif); }
+    .passport-unlock-copy p { margin: 4px 0 0; color: var(--ink-soft); font-size: 10px; line-height: 1.55; }
+    .passport-unlock .secondary-button { min-height: 36px; white-space: nowrap; font-size: 10px; }
+    .sidebar-title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .sidebar-title { margin: 0; font: 600 16px var(--serif); }
+    .sidebar-count { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 7px; border: 1px solid var(--line); border-radius: 50%; color: var(--red); font: 12px var(--serif); }
+    .sidebar-copy { margin: 8px 0 16px; color: var(--muted); font-size: 10px; line-height: 1.65; }
+    .history-list { display: grid; gap: 0; }
+    .history-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1px solid #eee6d9; }
+    .history-main { min-width: 0; }
+    .history-category { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 11px; font-weight: 600; }
+    .history-seal { width: 8px; height: 8px; border: 1px solid var(--red); border-radius: 50%; box-shadow: inset 0 0 0 2px var(--paper-light); background: var(--red); }
+    .history-date { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .history-duration { flex: 0 0 auto; color: var(--sage); font: 12px var(--serif); }
+    .empty-state { padding: 14px 0 4px; color: #9a9285; font-size: 10px; line-height: 1.7; }
+    .sidebar-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eee6d9; }
+    .storage-note { color: var(--muted); font-size: 9px; }
+    .clear-button { border: 0; padding: 5px 0 5px 8px; color: #938a7d; background: transparent; font-size: 9px; }
+    .clear-button:hover { color: var(--red); }
+    .how-panel { padding: 20px 21px; }
+    .how-title { margin: 0 0 13px; font: 600 15px var(--serif); }
+    .how-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+    .how-item { display: grid; grid-template-columns: 23px 1fr; gap: 9px; align-items: start; color: var(--ink-soft); font-size: 10px; line-height: 1.6; }
+    .how-step { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--red); background: #f6e8df; font: 11px var(--serif); }
+    .footer { display: flex; justify-content: space-between; gap: 14px; margin-top: 30px; padding-top: 15px; border-top: 1px solid rgba(98,78,55,.16); color: #8b8479; font-size: 9px; line-height: 1.6; }
+    .footer strong { color: var(--ink-soft); font-weight: 600; }
+    [hidden] { display: none !important; }
+    @media (max-width: 900px) {
+      .page { padding: 22px 22px 36px; }
+      .hero { gap: 16px; padding: 48px 0 38px; }
+      .main-grid { grid-template-columns: minmax(0,1fr) 245px; gap: 16px; }
+      .compose-panel { padding: 24px 22px; }
+      .cards-panel, .timer-panel, .result-panel { padding: 22px; }
+      .cards-grid { gap: 8px; }
+      .task-card { padding: 11px 9px; }
+      .timer-layout { grid-template-columns: 180px minmax(0,1fr); gap: 18px; }
+      .timer-dial { width: 174px; height: 174px; }
+      .timer-value { font-size: 39px; }
+      .result-layout { grid-template-columns: minmax(0,1fr) 155px; }
+    }
+    @media (max-width: 700px) {
+      .page { padding: 16px 15px 28px; }
+      .topbar { align-items: flex-start; }
+      .offline-pill { padding: 7px 9px; font-size: 9px; }
+      .hero { grid-template-columns: 1fr; gap: 19px; padding: 37px 1px 30px; }
+      h1 { max-width: 520px; font-size: clamp(40px,12vw,58px); }
+      .hero-copy { font-size: 13px; }
+      .postcard-scene { min-height: 156px; }
+      .postcard { width: min(86%,360px); min-height: 147px; padding: 17px 20px; }
+      .postcard-lines { margin-top: 18px; }
+      .mini-stamp { top: 26px; right: 25px; width: 57px; height: 67px; }
+      .mini-stamp svg { width: 27px; height: 27px; }
+      .main-grid { grid-template-columns: 1fr; }
+      .sidebar { grid-template-columns: 1fr 1fr; align-items: start; }
+      .sidebar-panel, .how-panel { padding: 17px 15px; }
+      .compose-panel { padding: 21px 18px; }
+      .cards-panel, .timer-panel, .result-panel { padding: 20px 17px; }
+      .cards-grid { grid-template-columns: 1fr; gap: 9px; }
+      .task-card { padding: 12px; }
+      .card-edit { min-height: 66px; }
+      .cards-header { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .category-note { max-width: none; text-align: left; }
+      .cards-footer { align-items: flex-start; flex-direction: column; }
+      .cards-footer .primary-button { width: 100%; }
+      .timer-layout { grid-template-columns: 1fr; gap: 18px; }
+      .timer-dial { width: 184px; height: 184px; }
+      .focus-side { width: 100%; }
+      .result-layout { grid-template-columns: 1fr; }
+      .stamp-frame { max-width: 360px; margin: 0 auto; }
+      .result-copy { text-align: center; }
+      .result-actions { justify-content: center; }
+      .passport-unlock { grid-template-columns: 36px minmax(0,1fr); }
+      .passport-unlock .secondary-button { grid-column: 1 / -1; width: 100%; }
+      .footer { flex-direction: column; gap: 4px; }
+    }
+    @media (max-width: 420px) {
+      .brand-name { font-size: 16px; }
+      .offline-pill { gap: 6px; font-size: 8px; }
+      .offline-dot { width: 6px; height: 6px; }
+      .section-head { gap: 8px; }
+      .micro-label { font-size: 8px; }
+      h2 { font-size: 22px; }
+      .input-meta { font-size: 9px; }
+      .action-row { align-items: stretch; flex-direction: column; }
+      .action-row .primary-button { width: 100%; }
+      .privacy-note { max-width: none; }
+      .sidebar { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="DraftStamp 首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4.2 7.2h15.6v10.1H4.2z" stroke="#1f2c3d" stroke-width="1.35"/><path d="m4.6 7.7 7.4 5.8 7.4-5.8" stroke="#b64e3d" stroke-width="1.35"/><path d="M8 4.4h8" stroke="#1f2c3d" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </span>
+        <span><span class="brand-name">DraftStamp</span><span class="brand-sub">The 10-minute writing post</span></span>
+      </a>
+      <span class="offline-pill"><i class="offline-dot" aria-hidden="true"></i> 完全离线 · 原文不上传</span>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <div class="eyebrow">A tiny post office for writers</div>
+          <h1 id="hero-title">先写十分钟，<br><em>再等灵感。</em></h1>
+          <p class="hero-copy">把报告、论文或脑海里的那个“我不知道怎么开始”，拆成一张小到能立刻动笔的任务卡。写完这一小段，就给自己盖一枚完成邮戳。</p>
+          <div class="hero-note">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 4 5v4.4c0 3.6 2.4 6.6 6 8.1 3.6-1.5 6-4.5 6-8.1V5l-6-2.5Z" stroke="currentColor" stroke-width="1.3"/><path d="m7.2 9.8 1.8 1.8 3.9-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            不评判文笔，只帮你把第一段寄出去。
+          </div>
+        </div>
+        <div class="postcard-scene" aria-hidden="true">
+          <span class="tiny-star one">✳</span><span class="tiny-star two">✦</span>
+          <div class="postcard">
+            <div class="postcard-top"><span>Air mail · No. 010</span><span>To: your future draft</span></div>
+            <div class="postcard-lines"><i></i><i></i><i></i></div>
+            <div class="mini-stamp"><svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="13.5" stroke="currentColor" stroke-width="1.2"/><path d="M13 21.2 18 26l9-12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 3v4M20 33v4M3 20h4M33 20h4" stroke="currentColor" stroke-width="1"/></svg></div>
+            <div class="postmark"><span></span></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="main-grid">
+        <div class="main-column">
+          <section class="panel compose-panel" id="composePanel" aria-labelledby="compose-title">
+            <div class="section-head">
+              <div>
+                <div class="step-label"><span class="step-number">01</span> 写下卡点</div>
+                <h2 id="compose-title">把卡住的点交给邮差</h2>
+                <p class="section-copy">一句话就够。这里不会替你写完，只负责帮你找到一个入口。</p>
+              </div>
+              <span class="micro-label">Your first sentence can be rough</span>
+            </div>
+            <form id="composeForm" novalidate>
+              <label class="field-label" for="blocker">现在最卡住的是……</label>
+              <textarea class="blocker-input" id="blocker" maxlength="260" placeholder="例如：我知道想写校园外卖，但开头总像在写流水账。" aria-describedby="inputPrivacy counter"></textarea>
+              <div class="input-meta"><strong id="inputPrivacy">只在此页面临时判断卡点，不保存原文。</strong><span id="counter">0 / 260</span></div>
+              <div class="action-row">
+                <div class="privacy-note">
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="4" y="8.5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="10" cy="12.8" r="1" fill="currentColor"/></svg>
+                  你的原文不会写入记录、邮票图片或网络请求；刷新即清空。
+                </div>
+                <button class="primary-button" type="submit">拆成三张任务卡 <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              </div>
+              <p class="message" id="formMessage" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <section class="panel cards-panel" id="cardsSection" aria-labelledby="cards-title" hidden>
+            <div class="cards-header">
+              <div>
+                <div class="step-label"><span class="step-number">02</span> 选一张寄出</div>
+                <h2 id="cards-title">三张小任务，挑一张就好</h2>
+                <p class="section-copy">可以直接改写卡片内容；选最容易动笔的那张，不用选“最好”的。</p>
+              </div>
+              <div class="category-note" id="categoryNote" aria-live="polite"></div>
+            </div>
+            <div class="cards-grid" id="cardsGrid"></div>
+            <div class="cards-footer">
+              <p>任务卡只在当前页面临时保留，刷新后会清空。</p>
+              <button class="primary-button" id="startButton" type="button" disabled>开始 10 分钟写作 <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4.5 15 10l-8 5.5v-11Z" fill="currentColor"/></svg></button>
+            </div>
+          </section>
+
+          <section class="panel timer-panel" id="timerSection" aria-labelledby="timer-title" hidden>
+            <div class="timer-head">
+              <div>
+                <div class="step-label"><span class="step-number">03</span> 写作时间</div>
+                <h2 id="timer-title">把这一小段写出来</h2>
+              </div>
+              <span class="micro-label" id="activeCategoryLabel"></span>
+            </div>
+            <div class="timer-layout">
+              <div class="timer-dial" id="timerDial" role="timer" aria-label="剩余时间 10 分钟">
+                <div class="timer-inner"><span class="timer-caption">time left</span><strong class="timer-value" id="timerValue">10:00</strong><span class="timer-state" id="timerState">专注写，不用修饰</span></div>
+              </div>
+              <div class="focus-side">
+                <h3 class="focus-title" id="activeTaskTitle">你的十分钟任务</h3>
+                <p class="focus-subtitle" id="activeTaskText"></p>
+                <div class="draft-label-row"><label for="draftText">如果愿意，可以直接在这里写草稿</label><span id="draftCount">0 字</span></div>
+                <textarea class="draft-input" id="draftText" placeholder="先写下来，不必一次写对……" aria-label="临时草稿，仅保留在当前页面"></textarea>
+                <div class="timer-controls">
+                  <button class="secondary-button" id="pauseButton" type="button">暂停</button>
+                  <button class="primary-button" id="finishButton" type="button">结束并盖章</button>
+                  <button class="quiet-button" id="resetButton" type="button">重新计时</button>
+                </div>
+                <p class="timer-reminder">草稿不会自动保存；完成邮票仅包含类别、用时和完成状态。</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel result-panel" id="resultSection" aria-labelledby="result-title" hidden>
+            <div class="step-label"><span class="step-number">✓</span> 已经寄出</div>
+            <div class="result-layout">
+              <div class="stamp-frame"><img class="stamp-img" id="stampImage" alt="完成邮票，只含挑战类别、时长和完成状态"></div>
+              <div class="result-copy">
+                <h3 id="result-title">这一小段，完成了。</h3>
+                <p id="resultSummary">你刚刚给自己留下一枚邮戳。原文和草稿没有被记录或写进图片。</p>
+                <div class="result-actions">
+                  <button class="primary-button" id="downloadButton" type="button"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15.5v1h12v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>下载邮票 PNG</button>
+                  <button class="secondary-button" id="againButton" type="button">再寄一张</button>
+                </div>
+              </div>
+            </div>
+            <div class="passport-unlock" id="passportUnlock" hidden aria-live="polite">
+              <span class="passport-unlock-seal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.4"/><path d="m7.5 12.2 3 3 6-6.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div class="passport-unlock-copy"><strong>三枚邮戳，装满一页</strong><p id="passportUnlockSummary"></p></div>
+              <button class="secondary-button" id="downloadPassportResult" type="button">下载本页护照 PNG</button>
+            </div>
+          </section>
+        </div>
+
+        <aside class="sidebar" aria-label="写作邮局信息">
+          <section class="panel passport-panel" aria-labelledby="passport-title">
+            <div class="sidebar-title-row"><h2 class="sidebar-title" id="passport-title">写作护照</h2><span class="passport-page-count" id="passportPageCount">0</span></div>
+            <p class="passport-copy">每完成一次挑战收一枚；三枚装满一页。没有连续签到，什么时候回来都可以。</p>
+            <div class="passport-slots" id="passportSlots" aria-label="本页三枚挑战邮戳"></div>
+            <div class="passport-meter">
+              <div class="passport-meter-label"><span>本页进度</span><strong id="passportProgressCount">0 / 3</strong></div>
+              <div class="passport-progress-track" id="passportProgressTrack" role="progressbar" aria-label="当前护照页进度" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0"><span class="passport-progress-fill" id="passportProgressFill"></span></div>
+            </div>
+            <p class="passport-message" id="passportMessage" aria-live="polite">三枚新邮戳凑齐即可下载护照；停多久都没关系。</p>
+            <p class="passport-latest" id="latestPassportSummary">第一张护照会在三次挑战后出现。</p>
+            <button class="secondary-button passport-download" id="downloadPassportButton" type="button" disabled>集满 3 枚后下载</button>
+          </section>
+          <section class="panel sidebar-panel" aria-labelledby="history-title">
+            <div class="sidebar-title-row"><h2 class="sidebar-title" id="history-title">最近的邮戳</h2><span class="sidebar-count" id="historyCount">0</span></div>
+            <p class="sidebar-copy">只在这台设备的浏览器里保存完成记录，不含原文或草稿。</p>
+            <div class="history-list" id="historyList" aria-live="polite"></div>
+            <div class="sidebar-bottom"><span class="storage-note">本机 · localStorage</span><button class="clear-button" id="clearHistoryButton" type="button">清空全部</button></div>
+          </section>
+          <section class="panel how-panel" aria-labelledby="how-title">
+            <h2 class="how-title" id="how-title">怎么开始？</h2>
+            <ol class="how-list">
+              <li class="how-item"><span class="how-step">1</span><span>写一句卡点，让邮差判断你需要哪种起步。</span></li>
+              <li class="how-item"><span class="how-step">2</span><span>挑一张任务卡；内容可以按你的想法改写。</span></li>
+              <li class="how-item"><span class="how-step">3</span><span>专注十分钟，完成后下载一张不含原文的邮票。</span></li>
+            </ol>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="footer"><span><strong>DraftStamp</strong> · 给空白页一个轻一点的开头。</span><span>离线优先 · 无账号 · 无联网 AI · 无追踪</span></footer>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE_KEY = 'draftstamp.records.v1';
+      const PASSPORT_KEY = 'draftstamp.passport.v1';
+      const PASSPORT_STAMPS_PER_PAGE = 3;
+      const MAX_PASSPORT_PAGES = 5000;
+      const ROUND_SECONDS = 10 * 60;
+      const CATEGORY = {
+        start: { label: '起步', description: '从开始动笔切入', badge: '起步卡' },
+        structure: { label: '结构', description: '从理顺顺序切入', badge: '结构卡' },
+        evidence: { label: '证据', description: '从具体材料切入', badge: '证据卡' }
+      };
+      const TASKS = {
+        start: [
+          { title: '开一扇小窗', text: '先写 3 句不求完整的话：现象是什么？为什么值得写？你此刻最想说的判断是什么？' },
+          { title: '从具体处落笔', text: '挑一个你亲历或明确记得的细节，用 4–6 句描述它，再加一句“它说明了什么”。' },
+          { title: '反过来写', text: '写出一个读者可能提出的反对意见，然后用一句暂定判断回应它。' }
+        ],
+        structure: [
+          { title: '搭三张小标题', text: '列出 3 个小标题，每个下面写一句暂定观点。先排顺序，不补细节。' },
+          { title: '画一条因果线', text: '用“因为……所以……但……”写 3 句，把原因、结果和限制接起来。' },
+          { title: '给段落排队', text: '写下“开头、证据、解释、转折”这 4 个词，再为每个词补一句。' }
+        ],
+        evidence: [
+          { title: '证据连上判断', text: '挑一条现成材料，写清它支持什么判断；缺来源的地方标上“待核实”，先继续前进。' },
+          { title: '举一个具体例子', text: '写一个具体案例或观察，再用一句话说清它和主题之间的关系。' },
+          { title: '先承认边界', text: '写下你目前还不知道什么，再写一条可以验证的小线索。' }
+        ]
+      };
+      const $ = (id) => document.getElementById(id);
+      const blocker = $('blocker');
+      const cardsGrid = $('cardsGrid');
+      const cardsSection = $('cardsSection');
+      const timerSection = $('timerSection');
+      const resultSection = $('resultSection');
+      let promptCards = [];
+      let selectedIndex = -1;
+      let activeCategory = 'start';
+      let activeTask = '';
+      let secondsLeft = ROUND_SECONDS;
+      let deadline = 0;
+      let timerHandle = null;
+      let paused = false;
+      let lastRecord = null;
+      let lastCompletedPassport = null;
+      let latestPassport = null;
+
+      function detectCategory(text) {
+        const scores = { start: 0, structure: 0, evidence: 0 };
+        const patterns = {
+          start: /不知道|不知从|怎么开始|開頭|开头|第一句|没头绪|沒有頭緒|没思路|卡住|空白|下不了笔|下不了筆|start|stuck|begin|blank/i,
+          structure: /结构|結構|逻辑|邏輯|框架|顺序|順序|段落|组织|組織|提纲|大纲|outline|structure|organize|flow/i,
+          evidence: /证据|證據|引用|资料|資料|数据|數據|来源|來源|研究|文献|文獻|例子|证明|證明|source|evidence|cite|citation|research/i
+        };
+        for (const id of Object.keys(patterns)) {
+          const matches = text.match(new RegExp(patterns[id].source, 'gi'));
+          scores[id] = matches ? matches.length : 0;
+        }
+        if (scores.evidence > scores.start && scores.evidence >= scores.structure) return 'evidence';
+        if (scores.structure > scores.start && scores.structure > scores.evidence) return 'structure';
+        return 'start';
+      }
+
+      function renderCards() {
+        cardsGrid.replaceChildren();
+        promptCards.forEach((item, index) => {
+          const article = document.createElement('article');
+          article.className = 'task-card';
+          article.dataset.index = String(index);
+          const top = document.createElement('div');
+          top.className = 'card-top';
+          const indexLabel = document.createElement('span');
+          indexLabel.className = 'card-index';
+          indexLabel.textContent = `TASK 0${index + 1}`;
+          const chip = document.createElement('span');
+          chip.className = 'card-chip';
+          chip.textContent = CATEGORY[activeCategory].badge;
+          top.append(indexLabel, chip);
+          const title = document.createElement('h3');
+          title.style.cssText = 'margin:0 0 4px;font:600 14px/1.4 var(--serif)';
+          title.textContent = item.title;
+          const edit = document.createElement('textarea');
+          edit.className = 'card-edit';
+          edit.rows = 4;
+          edit.maxLength = 280;
+          edit.setAttribute('aria-label', `改写任务卡 ${index + 1}`);
+          edit.value = item.text;
+          edit.addEventListener('focus', () => selectCard(index));
+          edit.addEventListener('input', () => { promptCards[index].text = edit.value; });
+          const pick = document.createElement('button');
+          pick.className = 'pick-card';
+          pick.type = 'button';
+          pick.setAttribute('aria-pressed', 'false');
+          pick.addEventListener('click', () => selectCard(index));
+          article.append(top, title, edit, pick);
+          cardsGrid.append(article);
+        });
+        updateCardButtons();
+      }
+
+      function updateCardButtons() {
+        [...cardsGrid.querySelectorAll('.task-card')].forEach((card, index) => {
+          const chosen = index === selectedIndex;
+          card.classList.toggle('selected', chosen);
+          const button = card.querySelector('.pick-card');
+          button.setAttribute('aria-pressed', String(chosen));
+          button.replaceChildren();
+          const label = document.createElement('span');
+          label.textContent = chosen ? '已选中' : '选这张卡';
+          const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          icon.setAttribute('viewBox', '0 0 20 20');
+          icon.setAttribute('fill', 'none');
+          icon.setAttribute('aria-hidden', 'true');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', chosen ? 'm4.5 10 3.5 3.5 7.5-8' : 'M4 10h12m-5-5 5 5-5 5');
+          path.setAttribute('stroke', 'currentColor');
+          path.setAttribute('stroke-width', '1.5');
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+          icon.append(path);
+          button.append(label, icon);
+        });
+        $('startButton').disabled = selectedIndex < 0;
+      }
+
+      function selectCard(index) {
+        selectedIndex = index;
+        updateCardButtons();
+      }
+
+      $('counter').textContent = `0 / ${blocker.maxLength}`;
+      blocker.addEventListener('input', () => { $('counter').textContent = `${blocker.value.length} / ${blocker.maxLength}`; });
+      $('composeForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const text = blocker.value.trim();
+        const message = $('formMessage');
+        if (text.length < 3) {
+          message.textContent = '写一句就好（至少 3 个字），邮差才能判断从哪一类任务开始。';
+          blocker.focus();
+          return;
+        }
+        activeCategory = detectCategory(text);
+        promptCards = TASKS[activeCategory].map((task) => ({ ...task }));
+        selectedIndex = -1;
+        $('categoryNote').textContent = `离线判断：你可能更需要「${CATEGORY[activeCategory].label}」方向。也可以忽略建议，直接选卡。`;
+        message.textContent = '';
+        renderCards();
+        cardsSection.hidden = false;
+        timerSection.hidden = true;
+        resultSection.hidden = true;
+        cardsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+      function formatClock(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+        return `${minutes}:${seconds}`;
+      }
+      function formatDuration(totalSeconds) {
+        const seconds = Math.max(0, Math.floor(totalSeconds));
+        const minutes = Math.floor(seconds / 60);
+        const remainder = seconds % 60;
+        if (minutes === 0) return `${remainder} 秒`;
+        if (remainder === 0) return `${minutes} 分钟`;
+        return `${minutes} 分 ${String(remainder).padStart(2, '0')} 秒`;
+      }
+      function updateTimer() {
+        $('timerValue').textContent = formatClock(secondsLeft);
+        const elapsedFraction = Math.max(0, Math.min(1, (ROUND_SECONDS - secondsLeft) / ROUND_SECONDS));
+        $('timerDial').style.setProperty('--progress', `${elapsedFraction * 360}deg`);
+        $('timerDial').setAttribute('aria-label', `剩余时间 ${Math.floor(secondsLeft / 60)} 分 ${secondsLeft % 60} 秒`);
+        $('timerState').textContent = paused ? '已暂停，准备好再继续' : (secondsLeft === 0 ? '时间到，写作已完成' : '专注写，不用修饰');
+        $('pauseButton').textContent = paused ? '继续计时' : '暂停';
+      }
+      function tick() {
+        if (!deadline || paused) return;
+        secondsLeft = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        updateTimer();
+        if (secondsLeft === 0) finishChallenge();
+      }
+      function runTimer() {
+        deadline = Date.now() + secondsLeft * 1000;
+        paused = false;
+        updateTimer();
+        clearInterval(timerHandle);
+        timerHandle = window.setInterval(tick, 250);
+      }
+      function beginChallenge() {
+        if (selectedIndex < 0) return;
+        activeTask = promptCards[selectedIndex].text.trim();
+        $('activeTaskTitle').textContent = promptCards[selectedIndex].title;
+        $('activeTaskText').textContent = activeTask;
+        $('activeCategoryLabel').textContent = `${CATEGORY[activeCategory].badge} · 10 MIN`; 
+        blocker.value = '';
+        $('counter').textContent = `0 / ${blocker.maxLength}`;
+        $('draftText').value = '';
+        $('draftCount').textContent = '0 字';
+        secondsLeft = ROUND_SECONDS;
+        paused = false;
+        resultSection.hidden = true;
+        timerSection.hidden = false;
+        runTimer();
+        timerSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      $('startButton').addEventListener('click', beginChallenge);
+      $('pauseButton').addEventListener('click', () => {
+        if (paused) {
+          runTimer();
+        } else {
+          tick();
+          if (secondsLeft > 0) {
+            clearInterval(timerHandle);
+            timerHandle = null;
+            paused = true;
+            updateTimer();
+          }
+        }
+      });
+      $('resetButton').addEventListener('click', () => {
+        if (!window.confirm('把本轮计时重新设为 10 分钟？当前草稿仍留在页面中。')) return;
+        secondsLeft = ROUND_SECONDS;
+        runTimer();
+      });
+      $('draftText').addEventListener('input', () => { $('draftCount').textContent = `${$('draftText').value.length} 字`; });
+
+      function drawStamp(categoryId, durationSeconds) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 760;
+        const ctx = canvas.getContext('2d');
+        const bg = '#f4efe5';
+        const ink = '#1f2c3d';
+        const red = '#b64e3d';
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#d4c8b7';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 12]);
+        ctx.strokeRect(28, 28, 1144, 704);
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#b9aa95';
+        for (let x = 48; x < 1155; x += 34) {
+          ctx.beginPath(); ctx.arc(x, 28, 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x, 732, 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+        for (let y = 62; y < 710; y += 34) {
+          ctx.beginPath(); ctx.arc(28, y, 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(1172, y, 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = '#a39887';
+        ctx.fillRect(126, 146, 92, 5);
+        ctx.fillRect(126, 164, 56, 5);
+        ctx.fillStyle = ink;
+        ctx.font = '600 84px "Microsoft YaHei", "PingFang SC", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(CATEGORY[categoryId].label, 126, 330);
+        ctx.strokeStyle = '#ded4c5';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(126, 376); ctx.lineTo(694, 376); ctx.stroke();
+        ctx.fillStyle = ink;
+        ctx.font = '500 55px "Microsoft YaHei", "PingFang SC", sans-serif';
+        ctx.fillText(formatDuration(durationSeconds), 126, 468);
+        ctx.strokeStyle = red;
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(907, 386, 171, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(907, 386, 151, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 40; i++) {
+          const angle = (Math.PI * 2 * i) / 40;
+          const inner = i % 5 === 0 ? 185 : 190;
+          const outer = 202;
+          ctx.lineWidth = i % 5 === 0 ? 4 : 2;
+          ctx.beginPath();
+          ctx.moveTo(907 + Math.cos(angle) * inner, 386 + Math.sin(angle) * inner);
+          ctx.lineTo(907 + Math.cos(angle) * outer, 386 + Math.sin(angle) * outer);
+          ctx.stroke();
+        }
+        ctx.fillStyle = red;
+        ctx.textAlign = 'center';
+        ctx.font = '600 52px "Microsoft YaHei", "PingFang SC", sans-serif';
+        ctx.fillText('已完成', 907, 405);
+        ctx.textAlign = 'left';
+        return canvas.toDataURL('image/png');
+      }
+
+      function loadPassportState() {
+        const empty = { currentStamps: [], completedPassports: [] };
+        try {
+          const parsed = JSON.parse(localStorage.getItem(PASSPORT_KEY) || 'null');
+          if (!parsed || typeof parsed !== 'object') return empty;
+          const currentStamps = Array.isArray(parsed.currentStamps) ? parsed.currentStamps
+            .filter((stamp) => stamp && CATEGORY[stamp.categoryId] && Number.isFinite(stamp.durationSeconds) && Number.isFinite(stamp.completedAt))
+            .map((stamp) => ({ categoryId: stamp.categoryId, durationSeconds: Math.max(0, Math.floor(stamp.durationSeconds)), completedAt: Math.floor(stamp.completedAt) }))
+            .slice(-PASSPORT_STAMPS_PER_PAGE) : [];
+          const completedPassports = Array.isArray(parsed.completedPassports) ? parsed.completedPassports
+            .filter((passport) => passport && passport.categories && Number.isFinite(passport.focusSeconds) && Number.isFinite(passport.completedAt))
+            .map((passport) => ({
+              id: String(passport.id || ''),
+              categories: Object.fromEntries(Object.keys(CATEGORY).map((id) => [id, Math.max(0, Math.floor(Number(passport.categories[id]) || 0))])),
+              focusSeconds: Math.max(0, Math.floor(passport.focusSeconds)),
+              completedAt: Math.floor(passport.completedAt)
+            }))
+            .slice(0, MAX_PASSPORT_PAGES) : [];
+          return { currentStamps, completedPassports };
+        } catch (_) { return empty; }
+      }
+      function savePassportState(state) {
+        try {
+          localStorage.setItem(PASSPORT_KEY, JSON.stringify(state));
+          return true;
+        } catch (_) { return false; }
+      }
+      function collectPassportStamp(record) {
+        const state = loadPassportState();
+        if (state.currentStamps.length >= PASSPORT_STAMPS_PER_PAGE) state.currentStamps = [];
+        state.currentStamps.push({ categoryId: record.categoryId, durationSeconds: record.durationSeconds, completedAt: record.completedAt });
+        let completedPassport = null;
+        if (state.currentStamps.length === PASSPORT_STAMPS_PER_PAGE) {
+          const categories = { start: 0, structure: 0, evidence: 0 };
+          let focusSeconds = 0;
+          state.currentStamps.forEach((stamp) => {
+            categories[stamp.categoryId] += 1;
+            focusSeconds += stamp.durationSeconds;
+          });
+          completedPassport = {
+            id: `passport-${Date.now().toString(36)}`,
+            categories,
+            focusSeconds,
+            completedAt: Date.now()
+          };
+          state.completedPassports = [completedPassport, ...state.completedPassports].slice(0, MAX_PASSPORT_PAGES);
+        }
+        return { state, completedPassport, saved: savePassportState(state) };
+      }
+      function passportSummaryText(passport) {
+        const categoryCounts = Object.keys(CATEGORY).map((id) => `${CATEGORY[id].label} ${passport.categories[id]} 次`).join(' · ');
+        return `${categoryCounts} · 专注 ${formatDuration(passport.focusSeconds)}`;
+      }
+      function renderPassport(stateOverride = null) {
+        const state = stateOverride || loadPassportState();
+        const current = state.currentStamps.slice(0, PASSPORT_STAMPS_PER_PAGE);
+        const slots = $('passportSlots');
+        slots.replaceChildren();
+        for (let index = 0; index < PASSPORT_STAMPS_PER_PAGE; index++) {
+          const stamp = current[index];
+          const slot = document.createElement('div');
+          slot.className = `passport-slot${stamp ? ' is-stamped' : ''}`;
+          slot.setAttribute('aria-label', stamp ? `第 ${index + 1} 枚：${CATEGORY[stamp.categoryId].label}` : `第 ${index + 1} 枚待收集`);
+          const number = document.createElement('span');
+          number.className = 'passport-slot-number';
+          number.textContent = `STAMP 0${index + 1}`;
+          const mark = document.createElement('span');
+          mark.className = 'passport-slot-mark';
+          mark.setAttribute('aria-hidden', 'true');
+          const label = document.createElement('span');
+          label.className = stamp ? 'passport-slot-category' : 'passport-slot-empty';
+          label.textContent = stamp ? CATEGORY[stamp.categoryId].label : '待盖章';
+          slot.append(number, mark, label);
+          slots.append(slot);
+        }
+        $('passportProgressCount').textContent = `${current.length} / ${PASSPORT_STAMPS_PER_PAGE}`;
+        $('passportProgressTrack').setAttribute('aria-valuenow', String(current.length));
+        $('passportProgressFill').style.width = `${(current.length / PASSPORT_STAMPS_PER_PAGE) * 100}%`;
+        $('passportMessage').textContent = current.length === PASSPORT_STAMPS_PER_PAGE
+          ? '这一页已盖满。下一次挑战会开启新一页。'
+          : `还差 ${PASSPORT_STAMPS_PER_PAGE - current.length} 枚就能下载护照；中间停多久都没关系。`;
+        $('passportPageCount').textContent = String(state.completedPassports.length);
+        latestPassport = state.completedPassports[0] || null;
+        $('latestPassportSummary').textContent = latestPassport
+          ? `最近一页：${passportSummaryText(latestPassport)}`
+          : '第一张护照会在三次挑战后出现。';
+        $('downloadPassportButton').disabled = !latestPassport;
+        $('downloadPassportButton').textContent = latestPassport ? '下载最近一页 PNG' : '集满 3 枚后下载';
+      }
+      function drawPassport(passport) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 860;
+        const ctx = canvas.getContext('2d');
+        const bg = '#f4efe5';
+        const ink = '#1f2c3d';
+        const red = '#b64e3d';
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#d4c8b7';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 12]);
+        ctx.strokeRect(30, 30, 1140, 800);
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#b9aa95';
+        for (let x = 50; x < 1155; x += 34) {
+          ctx.beginPath(); ctx.arc(x, 30, 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x, 830, 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+        for (let y = 64; y < 810; y += 34) {
+          ctx.beginPath(); ctx.arc(30, y, 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(1170, y, 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+        const categoryIds = Object.keys(CATEGORY);
+        categoryIds.forEach((id, index) => {
+          const y = 250 + index * 150;
+          ctx.strokeStyle = '#d8cebf';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(130, y + 45); ctx.lineTo(1065, y + 45); ctx.stroke();
+          ctx.strokeStyle = red;
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(170, y, 35, 0, Math.PI * 2); ctx.stroke();
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(170, y, 27, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = ink;
+          ctx.textAlign = 'left';
+          ctx.font = '600 54px "Microsoft YaHei", "PingFang SC", sans-serif';
+          ctx.fillText(CATEGORY[id].label, 235, y + 18);
+          ctx.textAlign = 'right';
+          ctx.font = '500 42px "Microsoft YaHei", "PingFang SC", sans-serif';
+          ctx.fillText(`${passport.categories[id]} 次`, 1010, y + 16);
+        });
+        ctx.fillStyle = red;
+        ctx.textAlign = 'left';
+        ctx.font = '500 31px "Microsoft YaHei", "PingFang SC", sans-serif';
+        ctx.fillText('专注时长', 140, 760);
+        ctx.fillStyle = ink;
+        ctx.font = '600 48px "Microsoft YaHei", "PingFang SC", sans-serif';
+        ctx.fillText(formatDuration(passport.focusSeconds), 360, 760);
+        ctx.textAlign = 'left';
+        return canvas.toDataURL('image/png');
+      }
+      function downloadPassportFile(passport) {
+        if (!passport) return;
+        const anchor = document.createElement('a');
+        anchor.href = drawPassport(passport);
+        anchor.download = `draftstamp-passport-${Date.now()}.png`;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+      }
+
+      function loadRecords() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter((record) => record && CATEGORY[record.categoryId] && record.completed === true && Number.isFinite(record.durationSeconds) && Number.isFinite(record.completedAt)).slice(0, 30).map((record) => ({
+            id: String(record.id || ''),
+            categoryId: record.categoryId,
+            durationSeconds: Math.max(0, Math.floor(record.durationSeconds)),
+            completed: true,
+            completedAt: Math.floor(record.completedAt)
+          }));
+        } catch (_) { return []; }
+      }
+      function saveRecord(record) {
+        const records = [record, ...loadRecords()].slice(0, 30);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+          return true;
+        } catch (_) { return false; }
+      }
+      function localDate(timestamp) {
+        return new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' }).format(new Date(timestamp));
+      }
+      function renderHistory() {
+        const records = loadRecords();
+        const list = $('historyList');
+        list.replaceChildren();
+        $('historyCount').textContent = String(records.length);
+        if (records.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'empty-state';
+          empty.textContent = '还没有邮戳。完成第一张任务卡，它就会出现在这里。';
+          list.append(empty);
+          return;
+        }
+        records.slice(0, 5).forEach((record) => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          const main = document.createElement('div');
+          main.className = 'history-main';
+          const category = document.createElement('span');
+          category.className = 'history-category';
+          const seal = document.createElement('i');
+          seal.className = 'history-seal';
+          seal.setAttribute('aria-hidden', 'true');
+          category.append(seal, document.createTextNode(`${CATEGORY[record.categoryId].label} · 已完成`));
+          const date = document.createElement('span');
+          date.className = 'history-date';
+          date.textContent = localDate(record.completedAt);
+          main.append(category, date);
+          const duration = document.createElement('span');
+          duration.className = 'history-duration';
+          duration.textContent = formatDuration(record.durationSeconds);
+          item.append(main, duration);
+          list.append(item);
+        });
+      }
+
+      function finishChallenge() {
+        if (timerHandle) clearInterval(timerHandle);
+        timerHandle = null;
+        deadline = 0;
+        paused = false;
+        const durationSeconds = Math.max(0, ROUND_SECONDS - secondsLeft);
+        const record = {
+          id: `ds-${Date.now().toString(36)}`,
+          categoryId: activeCategory,
+          durationSeconds,
+          completed: true,
+          completedAt: Date.now()
+        };
+        lastRecord = record;
+        const saved = saveRecord(record);
+        const passportResult = collectPassportStamp(record);
+        lastCompletedPassport = passportResult.completedPassport;
+        renderHistory();
+        renderPassport(passportResult.state);
+        $('stampImage').src = drawStamp(activeCategory, durationSeconds);
+        $('resultSummary').textContent = saved && passportResult.saved
+          ? `你完成了「${CATEGORY[activeCategory].label}」挑战，用时 ${formatDuration(durationSeconds)}。挑战邮票不含正文，护照进度已保存在本机。`
+          : `你完成了「${CATEGORY[activeCategory].label}」挑战，用时 ${formatDuration(durationSeconds)}。本机记录未能完整保存，但挑战邮票仍可下载。`;
+        $('passportUnlock').hidden = !passportResult.completedPassport;
+        $('passportUnlockSummary').textContent = passportResult.completedPassport ? passportSummaryText(passportResult.completedPassport) : '';
+        timerSection.hidden = true;
+        resultSection.hidden = false;
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      $('finishButton').addEventListener('click', finishChallenge);
+      $('downloadButton').addEventListener('click', () => {
+        if (!lastRecord) return;
+        const anchor = document.createElement('a');
+        anchor.href = drawStamp(lastRecord.categoryId, lastRecord.durationSeconds);
+        anchor.download = `draftstamp-${lastRecord.categoryId}-${Date.now()}.png`;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+      });
+      $('downloadPassportButton').addEventListener('click', () => downloadPassportFile(latestPassport));
+      $('downloadPassportResult').addEventListener('click', () => downloadPassportFile(lastCompletedPassport));
+      $('againButton').addEventListener('click', () => {
+        promptCards = [];
+        selectedIndex = -1;
+        lastRecord = null;
+        lastCompletedPassport = null;
+        blocker.value = '';
+        $('counter').textContent = `0 / ${blocker.maxLength}`;
+        $('formMessage').textContent = '';
+        $('draftText').value = '';
+        cardsGrid.replaceChildren();
+        cardsSection.hidden = true;
+        timerSection.hidden = true;
+        resultSection.hidden = true;
+        $('composePanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        blocker.focus({ preventScroll: true });
+      });
+      $('clearHistoryButton').addEventListener('click', () => {
+        const records = loadRecords();
+        const passportState = loadPassportState();
+        if (!records.length && !passportState.currentStamps.length && !passportState.completedPassports.length) return;
+        if (!window.confirm('清空这台设备上的挑战记录、护照进度和已完成护照？此操作无法撤销。')) return;
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(PASSPORT_KEY);
+        renderHistory();
+        renderPassport();
+      });
+
+      renderHistory();
+      renderPassport();
+    })();
+  </script>
+</body>
+</html>
