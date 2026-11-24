@@ -1,65 +1,43 @@
-# DraftStamp · 写作十分钟邮局
+# DraftStamp
 
-把“我不知道怎么开始”变成一张可以马上动笔的小任务卡。DraftStamp 面向卡在报告、论文或个人写作起步的人：写一句卡点，离线得到三张可改写任务卡，挑一张专注十分钟，完成后盖一枚邮票；每三次挑战还能集成一页写作护照。
+DraftStamp 是一款离线写作起步工具：把一句写作卡点拆成可编辑的小任务，陪你专注写十分钟，并用邮票记录完成的一步。
 
-> 这是一个轻量、单页、无需安装的离线小工具。没有账号、联网 AI、待办看板或第三方依赖。
+## 它能做什么
 
-## 立即体验
+- **从卡点开始**：输入一句当前难题，应用按本地关键词判断起步、结构或证据方向，并给出三张对应的任务卡。
+- **自己挑选与修改**：卡片内容可编辑；选择最容易开始的一张，再进入十分钟写作计时。
+- **专注并完成**：计时支持暂停、继续和重新计时；草稿可直接写在页面中，也可以留空。
+- **用邮票记录进度**：完成后可下载挑战邮票 PNG。每三次挑战组成一页写作护照，也可下载护照 PNG；不要求连续打卡。
+- **本机查看历史**：侧栏展示最近完成记录，并提供清空本机记录与护照进度的操作。
 
-1. 下载或解压项目文件夹。
-2. 双击打开 `index.html`（也可以拖进现代浏览器）。
-3. 写一句卡点，选一张任务卡，开始 10 分钟挑战。
-4. 完成后下载挑战邮票 PNG；完成三次挑战后，还可下载写作护照卡。
+## 使用方式
 
-不需要 Node.js、服务器、构建步骤或网络连接。主要界面、计时、记录和 PNG 导出都在浏览器本地完成。
+1. 下载或解压项目文件。
+2. 用现代浏览器打开 `index.html`。
+3. 写下卡点、选择并按需修改任务卡，然后开始十分钟挑战。
+4. 完成后下载邮票；累计三次挑战后可下载一页护照。
 
-## 写作护照
+项目是单页静态应用，HTML、CSS、JavaScript 和 SVG 图形均内嵌在 `index.html` 中。无需安装依赖、构建或启动服务器，也无需联网即可使用。
 
-每完成一次挑战就收一枚类别邮戳，任意三次组成一页；重复类别也能集章。护照不设连续天数，停几天再回来，进度仍在。集满后可下载护照 PNG，内容只汇总三类挑战的次数和专注时长。旧版本已有的邮戳历史会保留，但不会混入新护照。
+## 界面与交互
 
-## 隐私说明
+页面以纸张、明信片和邮戳为视觉线索，按“写下卡点—选任务—专注写作—完成盖章”的顺序组织。桌面布局在侧栏呈现护照与历史记录；窄屏下改为单列，任务卡也改为纵向排列。输入框和任务卡支持直接编辑，计时器显示剩余时间，完成记录可导出为 PNG。
 
-- 输入的卡点仅在当前页面内存中用于本地判断任务方向，不会上传；开始计时后会清空该输入框。
-- 草稿和可编辑任务卡不会写入浏览器存储；刷新或关闭页面会清空它们。
-- `localStorage` 只保存挑战记录和护照统计等元数据，不含正文；最近挑战记录保留最多 30 条，完成护照统计最多 5,000 页。
-- 挑战 PNG 只含类别、时长和“已完成”；护照 PNG 只含类别次数和专注时长，不含输入原文、任务卡文本或草稿。
-- 侧栏的“清空全部”会同时删除本机挑战记录、护照进度和已完成护照。
-- 页面没有网络请求、分析追踪、登录或广告代码。
+## 隐私与本地数据
 
-## 项目结构
+应用不含账号、联网 AI、分析追踪或第三方依赖。卡点只在当前页面内存中用于本地关键词分类，开始挑战时清空；任务卡与草稿不会写入浏览器存储，刷新或关闭页面后即消失。`localStorage` 保存挑战记录及护照统计等元数据，不保存原文或草稿。导出的邮票仅包含类别、时长和完成状态；护照只汇总类别次数与专注时长。清空操作会删除本机挑战记录、护照进度和已完成护照。
 
-```text
-DraftStamp/
-├── .gitignore   # 忽略系统杂项与本地 QA 工作目录
-├── index.html   # 完整应用；CSS、JavaScript 和图形均内嵌，可离线打开
-├── LICENSE      # MIT 许可证
-└── README.md    # 中英双语使用与项目说明
-```
+## 技术与项目结构
 
-## 开发
+- 原生 HTML、CSS 与 JavaScript；样式、脚本及 SVG 图形内嵌于 `index.html`
+- 浏览器 `localStorage` 用于保存挑战与护照元数据
+- `index.html`：完整应用
+- `LICENSE`：MIT 许可证
 
-本项目没有打包或安装步骤。修改后直接重新打开 `index.html` 即可预览。
+## 开发预览
+
+修改 `index.html` 后，重新用浏览器打开该文件即可预览；项目没有打包或安装步骤。
 
 ## 许可证
 
-本项目采用 MIT 许可证，具体条款见 [LICENSE](LICENSE)。
-
-## English
-
-DraftStamp is a tiny, offline-first writing starter for people stuck at the beginning of a report, essay, or personal draft. Describe the block in one sentence, get three editable task cards generated locally, choose one, write for ten minutes, and collect a stamp. Three challenges make a shareable writing-passport page.
-
-### Quick start
-
-Open `index.html` in a modern browser. No install, build step, server, account, network connection, or third-party dependency is required.
-
-### Writing passport
-
-Every completed challenge adds one category stamp; any three challenges fill a page, including repeated categories. There is no streak or deadline. Downloaded passport PNGs contain only per-category challenge counts and total focus time. Existing challenge history remains, but older stamps do not count toward the first passport page.
-
-### Privacy by design
-
-The blocker text is used only in the current page's memory to select a local prompt category. It is cleared when a challenge starts. Draft text and editable cards are never written to browser storage and disappear on refresh or close. `localStorage` keeps only challenge and passport metadata, not writing text. Challenge PNGs contain category, duration, and completion status; passport PNGs contain category counts and focus time. The app makes no network requests and includes no analytics or tracking.
-
-### License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+本项目采用 MIT 许可证，详情见 [`LICENSE`](LICENSE)。
